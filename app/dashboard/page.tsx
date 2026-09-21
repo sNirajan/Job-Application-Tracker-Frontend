@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import FollowUpsPanel from "./FollowUpsPanel";
 
 interface StatsOverview {
   data: {
@@ -424,6 +425,8 @@ export default function DashboardPage() {
               <StatCard label="Active interviews" value={activeInterviews} />
               <StatCard label="Offers" value={offersCount} tone="accent" />
             </section>
+
+            <FollowUpsPanel />
 
             {/* One main pipeline card feels calmer than many equal-weight sections */}
             <section
