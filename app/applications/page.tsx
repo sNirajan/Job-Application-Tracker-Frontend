@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -197,8 +197,16 @@ export default function ApplicationsPage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Each list request gets a number. Only the newest request may update
+  // the screen, so a slow older response (e.g. for a search the user has
+  // already changed) can't overwrite the current results.
+  const latestRequest = useRef(0);
+
   const fetchApplications = useCallback(
     async (page = 1) => {
+      const requestId = ++latestRequest.current;
+      const isStale = () => requestId !== latestRequest.current;
+
       setLoading(true);
       setError("");
 
@@ -211,12 +219,14 @@ export default function ApplicationsPage() {
         const res = await api.get<ApplicationsResponse>(
           `/api/v1/applications?${params.toString()}`,
         );
+        if (isStale()) return;
         setApplications(res.data);
         setPagination(res.pagination);
       } catch {
+        if (isStale()) return;
         setError("Could not load applications. Please try again.");
       } finally {
-        setLoading(false);
+        if (!isStale()) setLoading(false);
       }
     },
     [statusFilter, companySearch, sortValue],
