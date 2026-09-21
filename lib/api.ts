@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+// Empty means "same site": requests go to /api/* on this site and are
+// forwarded to the backend (see API_PROXY_TARGET in next.config.ts).
+// Set NEXT_PUBLIC_API_URL only to call the backend directly (local dev).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 // Full URL for links the browser opens directly (e.g. document downloads).
 // Auth cookies go along automatically.
@@ -65,8 +68,10 @@ async function fetchWithRefresh(
   if (
     response.status === 401 &&
     !endpoint.includes("/auth/refresh") &&
-    !endpoint.includes("/auth/login") &&
-    !endpoint.includes("/auth/me")
+    // /auth/me is refreshed too: it runs on every page load, and without
+    // a refresh the user was logged out whenever the 15-minute access
+    // token had expired, even with a valid 7-day session.
+    !endpoint.includes("/auth/login")
   ) {
     const refreshed = await tryRefresh();
     if (refreshed) {
@@ -98,20 +103,29 @@ async function requestBlob(endpoint: string): Promise<Blob> {
   return response.blob();
 }
 
-async function tryRefresh(): Promise<boolean> {
-  try {
-    const response = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+// Only one refresh may run at a time. Refresh tokens are single-use and
+// the server treats a reused one as stolen (and logs the user out
+// everywhere), so parallel requests that all get a 401 must share the
+// same refresh instead of each sending the same token.
+let refreshInFlight: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${API_URL}/api/v1/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Requested-With": "XMLHttpRequest",
       },
       credentials: "include",
-    });
-    return response.ok;
-  } catch {
-    return false;
+    })
+      .then((response) => response.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null;
+      });
   }
+  return refreshInFlight;
 }
 
 // Public API methods
