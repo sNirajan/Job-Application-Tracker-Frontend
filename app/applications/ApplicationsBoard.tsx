@@ -25,6 +25,8 @@ import {
   isTerminal,
   type Status,
 } from "@/lib/statusMachine";
+import type { LatestResume } from "@/lib/types";
+import { FileText } from "lucide-react";
 
 interface BoardApplication {
   id: string;
@@ -33,6 +35,7 @@ interface BoardApplication {
   status: Status;
   location: string | null;
   updated_at: string;
+  latest_resume: LatestResume | null;
 }
 
 interface ApplicationsResponse {
@@ -533,6 +536,16 @@ function CardBody({
           style={{ color: "var(--text-muted)" }}
         >
           {app.location}
+        </p>
+      )}
+      {app.latest_resume && (
+        <p
+          className="mt-2 flex items-center gap-1 text-xs"
+          style={{ color: "var(--text-muted)" }}
+          title={`Resume: ${app.latest_resume.original_name}`}
+        >
+          <FileText className="h-3 w-3 shrink-0" />
+          <span className="truncate">{app.latest_resume.original_name}</span>
         </p>
       )}
       {saving && (

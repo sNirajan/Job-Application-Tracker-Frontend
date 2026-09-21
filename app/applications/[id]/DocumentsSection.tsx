@@ -1,10 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { Download, Eye, FileText, Trash2, Upload } from "lucide-react";
 import { api, apiUrl } from "@/lib/api";
 import type { ApplicationDocument, DocumentKind } from "@/lib/types";
 import { cardStyle, errorBoxStyle, errorMessage } from "@/lib/ui";
+import DocumentPreview from "./DocumentPreview";
+
+// Browsers can show PDFs; Word files have to be downloaded to open
+const isPreviewable = (doc: ApplicationDocument) =>
+  doc.mime_type === "application/pdf";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"];
@@ -47,6 +52,11 @@ export default function DocumentsSection({
   const [kind, setKind] = useState<DocumentKind>("resume");
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [previewing, setPreviewing] = useState<ApplicationDocument | null>(
+    null,
+  );
+  // Stable so the preview's keyboard listener isn't re-attached each render
+  const closePreview = useCallback(() => setPreviewing(null), []);
 
   const load = useCallback(async () => {
     try {
@@ -91,10 +101,10 @@ export default function DocumentsSection({
   // expired login by itself. Make one API call first (it refreshes the
   // session if needed), then let the browser fetch the file.
   async function handleDownload(
-    event: React.MouseEvent,
+    event: React.MouseEvent | null,
     doc: ApplicationDocument,
   ) {
-    event.preventDefault();
+    event?.preventDefault();
     setError("");
     try {
       await api.get(base);
@@ -229,22 +239,43 @@ export default function DocumentsSection({
                   style={{ color: "var(--accent)" }}
                 />
                 <div className="min-w-0">
-                  <p
-                    className="truncate text-sm font-medium"
+                  {/* Clicking the name opens the file: a preview for PDFs,
+                      a download for Word files */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isPreviewable(doc)
+                        ? setPreviewing(doc)
+                        : void handleDownload(null, doc)
+                    }
+                    className="block max-w-full truncate text-left text-sm font-medium underline-offset-2 hover:underline"
                     style={{ color: "var(--text-primary)" }}
                   >
                     {doc.original_name}
-                  </p>
+                  </button>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                     {KIND_LABELS[doc.kind]} · {formatSize(doc.size_bytes)} ·{" "}
                     {new Date(doc.created_at).toLocaleDateString("en", {
                       month: "short",
                       day: "numeric",
                     })}
+                    {!isPreviewable(doc) && " · Word file, opens as download"}
                   </p>
                 </div>
               </div>
               <div className="flex shrink-0 gap-1">
+                {isPreviewable(doc) && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewing(doc)}
+                    aria-label={`Preview ${doc.original_name}`}
+                    title="Preview"
+                    className="rounded-full p-2 transition hover:bg-white"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                )}
                 <a
                   href={apiUrl(`${base}/${doc.id}/download`)}
                   onClick={(e) => void handleDownload(e, doc)}
@@ -267,6 +298,15 @@ export default function DocumentsSection({
           ))}
         </ul>
       ) : null}
+
+      {previewing && (
+        <DocumentPreview
+          applicationId={applicationId}
+          document={previewing}
+          onDownload={() => void handleDownload(null, previewing)}
+          onClose={closePreview}
+        />
+      )}
     </section>
   );
 }

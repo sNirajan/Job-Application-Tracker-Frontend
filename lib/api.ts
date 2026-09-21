@@ -36,10 +36,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return data;
 }
 
-async function request<T>(
+// Sends the request with auth cookies, and retries once after refreshing
+// the session if the access token has expired.
+async function fetchWithRefresh(
   endpoint: string,
   options: RequestInit = {},
-): Promise<T> {
+): Promise<Response> {
   // Build the headers object
   // JSON requests get Content-Type: application/json. File uploads
   // (FormData) must not set it: the browser adds the multipart boundary.
@@ -68,15 +70,32 @@ async function request<T>(
   ) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+      return fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
         credentials: "include",
       });
-      return handleResponse<T>(retryResponse);
     }
   }
+  return response;
+}
+
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetchWithRefresh(endpoint, options);
   return handleResponse<T>(response);
+}
+
+// For file responses (e.g. PDF previews): returns the raw bytes as a Blob
+async function requestBlob(endpoint: string): Promise<Blob> {
+  const response = await fetchWithRefresh(endpoint, { method: "GET" });
+  if (!response.ok) {
+    // Errors still come back as our standard JSON error body
+    await handleResponse(response);
+  }
+  return response.blob();
 }
 
 async function tryRefresh(): Promise<boolean> {
@@ -112,6 +131,8 @@ export const api = {
     }),
 
   delete: <T>(endpoint: string) => request<T>(endpoint, { method: "DELETE" }),
+
+  getBlob: (endpoint: string) => requestBlob(endpoint),
 
   upload: <T>(endpoint: string, formData: FormData) =>
     request<T>(endpoint, { method: "POST", body: formData }),

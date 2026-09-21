@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ApplicationsBoard from "./ApplicationsBoard";
+import { FileText } from "lucide-react";
+import type { LatestResume } from "@/lib/types";
 
 type View = "list" | "board";
 
@@ -32,6 +34,7 @@ interface Application {
   salary_max: number | null;
   applied_at: string | null;
   created_at: string;
+  latest_resume: LatestResume | null;
 }
 
 interface ApplicationsResponse {
@@ -743,6 +746,18 @@ export default function ApplicationsPage() {
                           {app.role}
                           {app.location && ` · ${app.location}`}
                         </p>
+
+                        {app.latest_resume && (
+                          <p
+                            className="mt-2 flex items-center gap-1.5 text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            <FileText className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">
+                              {app.latest_resume.original_name}
+                            </span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="text-right">

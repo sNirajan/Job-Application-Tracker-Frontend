@@ -48,3 +48,10 @@ export interface ApplicationDocument {
   size_bytes: number;
   created_at: string;
 }
+
+// Newest resume on an application, included in list responses
+export interface LatestResume {
+  id: string;
+  original_name: string;
+  mime_type: string;
+}
