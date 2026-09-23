@@ -78,7 +78,7 @@ const BOARD_PREVIEW = [
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
+      <nav className="mx-auto flex max-w-[84rem] 2xl:max-w-[92rem] items-center justify-between px-6 py-6 md:px-10 lg:px-16">
         <span
           className="text-lg font-bold tracking-tight"
           style={{ fontFamily: "var(--font-manrope)" }}
@@ -96,18 +96,18 @@ export default function Home() {
         </div>
       </nav>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-14 px-6 py-16 md:px-10 md:py-24 lg:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="max-w-xl">
+      <section className="mx-auto grid max-w-[84rem] 2xl:max-w-[92rem] items-center gap-14 px-6 py-16 md:px-10 md:py-20 lg:grid-cols-[minmax(0,1fr)_30rem] lg:gap-20 lg:px-16">
+        <div className="max-w-2xl">
           <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
             Built for a calmer job search
           </p>
 
-          <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-[-0.02em] md:text-5xl">
+          <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-[-0.02em] md:text-5xl xl:text-6xl">
             Track every application in one organized place.
           </h1>
 
           <p
-            className="mt-5 max-w-[46ch] text-lg leading-relaxed"
+            className="mt-6 max-w-[48ch] text-lg leading-relaxed xl:text-xl"
             style={{ color: "var(--text-secondary)" }}
           >
             Keep your search organized from wishlist to offer, with one place
@@ -240,15 +240,15 @@ export default function Home() {
       {/* What you get. One shared heading with a divided list reads calmer
           than three identical feature cards. */}
       <section
-        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        className="mx-auto max-w-[84rem] 2xl:max-w-[92rem] px-6 py-20 md:px-10 lg:px-16 md:py-24"
         style={{ borderTop: "1px solid var(--border)" }}
       >
-        <div className="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-16">
-          <h2 className="text-2xl font-bold tracking-[-0.02em]">
+        <div className="grid gap-10 lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-20">
+          <h2 className="text-2xl font-bold tracking-[-0.02em] xl:text-3xl">
             What you get
           </h2>
 
-          <dl className="max-w-2xl">
+          <dl className="max-w-3xl">
             {CAPABILITIES.map((item, index) => (
               <div
                 key={item.title}
@@ -273,10 +273,10 @@ export default function Home() {
 
       {/* The board, shown rather than described */}
       <section
-        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        className="mx-auto max-w-[84rem] 2xl:max-w-[92rem] px-6 py-20 md:px-10 lg:px-16 md:py-24"
         style={{ borderTop: "1px solid var(--border)" }}
       >
-        <h2 className="max-w-[24ch] text-2xl font-bold tracking-[-0.02em]">
+        <h2 className="max-w-[24ch] text-2xl font-bold tracking-[-0.02em] xl:text-3xl">
           Every application, at the stage it is really at
         </h2>
         <p
@@ -334,10 +334,12 @@ export default function Home() {
 
       {/* Numbers earn their place here because this really is a sequence */}
       <section
-        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        className="mx-auto max-w-[84rem] 2xl:max-w-[92rem] px-6 py-20 md:px-10 lg:px-16 md:py-24"
         style={{ borderTop: "1px solid var(--border)" }}
       >
-        <h2 className="text-2xl font-bold tracking-[-0.02em]">How it works</h2>
+        <h2 className="text-2xl font-bold tracking-[-0.02em] xl:text-3xl">
+          How it works
+        </h2>
 
         <ol className="mt-8 grid gap-8 sm:grid-cols-3 sm:gap-10">
           {STEPS.map((step, index) => (
@@ -370,7 +372,7 @@ export default function Home() {
       </section>
 
       <footer
-        className="mx-auto max-w-6xl px-6 py-10 md:px-10"
+        className="mx-auto max-w-[84rem] 2xl:max-w-[92rem] px-6 py-10 md:px-10 lg:px-16"
         style={{ borderTop: "1px solid var(--border)" }}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
