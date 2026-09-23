@@ -5,8 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { z } from "zod";
+import EditApplicationForm from "./EditApplicationForm";
+import ContactsSection from "./ContactsSection";
+import RemindersSection from "./RemindersSection";
+import DocumentsSection from "./DocumentsSection";
 
 const STATUS_VALUES = [
   "wishlist",
@@ -72,13 +76,6 @@ const transitionPayloadSchema = z.object({
   notes: z.preprocess(emptyStringToUndefined, z.string().optional()),
 });
 
-function formatShortDate(value: string) {
-  return new Date(value).toLocaleDateString("en", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function formatFullDate(value: string) {
   return new Date(value).toLocaleDateString();
 }
@@ -119,6 +116,7 @@ export default function ApplicationDetailPage() {
   const [deleteError, setDeleteError] = useState("");
   const [transitioning, setTransitioning] = useState<Status | "">("");
   const [transitionNote, setTransitionNote] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -133,7 +131,9 @@ export default function ApplicationDetailPage() {
     try {
       const [appRes, timelineRes] = await Promise.all([
         api.get<{ data: Application }>(`/api/v1/applications/${id}`),
-        api.get<{ data: TimelineEvent[] }>(`/api/v1/applications/${id}/timeline`),
+        api.get<{ data: TimelineEvent[] }>(
+          `/api/v1/applications/${id}/timeline`,
+        ),
       ]);
 
       setApplication(appRes.data);
@@ -160,7 +160,9 @@ export default function ApplicationDetailPage() {
     });
 
     if (!parsed.success) {
-      setTransitionError("Could not update status. Please review the note and try again.");
+      setTransitionError(
+        "Could not update status. Please review the note and try again.",
+      );
       return;
     }
 
@@ -209,7 +211,10 @@ export default function ApplicationDetailPage() {
 
   if (pageError) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: "var(--bg-page)" }}>
+      <div
+        className="min-h-screen"
+        style={{ backgroundColor: "var(--bg-page)" }}
+      >
         <nav className="flex items-center justify-between px-8 py-5 lg:px-24">
           <Link
             href="/dashboard"
@@ -376,78 +381,119 @@ export default function ApplicationDetailPage() {
             border: "1px solid var(--border-light)",
           }}
         >
-          <h2
-            className="mb-4 text-sm font-semibold"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Details
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2
+              className="text-sm font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {isEditing ? "Edit details" : "Details"}
+            </h2>
 
-          <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-            {application.url && (
-              <div>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  URL
-                </p>
-                <a
-                  href={application.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="font-medium underline"
-                  style={{ color: "var(--accent)" }}
-                >
-                  View posting
-                </a>
-              </div>
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium"
+                style={{
+                  backgroundColor: "var(--bg-card-alt)",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--border-light)",
+                }}
+              >
+                <Pencil className="h-3 w-3" />
+                Edit
+              </button>
             )}
-
-            {application.salary_min && (
-              <div>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  Salary range
-                </p>
-                <p style={{ color: "var(--text-primary)" }}>
-                  {formatMoney(application.salary_min)}
-                  {application.salary_max
-                    ? ` - ${formatMoney(application.salary_max)}`
-                    : ""}
-                </p>
-              </div>
-            )}
-
-            {application.applied_at && (
-              <div>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  Applied
-                </p>
-                <p style={{ color: "var(--text-primary)" }}>
-                  {formatFullDate(application.applied_at)}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Added
-              </p>
-              <p style={{ color: "var(--text-primary)" }}>
-                {formatFullDate(application.created_at)}
-              </p>
-            </div>
           </div>
 
-          {application.notes && (
-            <div className="mt-4">
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Notes
-              </p>
-              <p
-                className="mt-1 text-sm leading-6"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {application.notes}
-              </p>
-            </div>
+          {isEditing ? (
+            <EditApplicationForm
+              application={application}
+              onCancel={() => setIsEditing(false)}
+              onSaved={async () => {
+                setIsEditing(false);
+                await fetchData();
+              }}
+            />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+                {application.url && (
+                  <div>
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      URL
+                    </p>
+                    <a
+                      href={application.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-medium underline"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      View posting
+                    </a>
+                  </div>
+                )}
+
+                {(application.salary_min || application.salary_max) && (
+                  <div>
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Salary range
+                    </p>
+                    <p style={{ color: "var(--text-primary)" }}>
+                      {application.salary_min && application.salary_max
+                        ? `${formatMoney(application.salary_min)} - ${formatMoney(application.salary_max)}`
+                        : application.salary_min
+                          ? `From ${formatMoney(application.salary_min)}`
+                          : `Up to ${formatMoney(application.salary_max!)}`}
+                    </p>
+                  </div>
+                )}
+
+                {application.applied_at && (
+                  <div>
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Applied
+                    </p>
+                    <p style={{ color: "var(--text-primary)" }}>
+                      {formatFullDate(application.applied_at)}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Added
+                  </p>
+                  <p style={{ color: "var(--text-primary)" }}>
+                    {formatFullDate(application.created_at)}
+                  </p>
+                </div>
+              </div>
+
+              {application.notes && (
+                <div className="mt-4">
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Notes
+                  </p>
+                  <p
+                    className="mt-1 whitespace-pre-wrap text-sm leading-6"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {application.notes}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -537,6 +583,12 @@ export default function ApplicationDetailPage() {
             </div>
           </div>
         )}
+
+        <RemindersSection applicationId={application.id} />
+
+        <ContactsSection applicationId={application.id} />
+
+        <DocumentsSection applicationId={application.id} />
 
         {/* Timeline */}
         <div
@@ -629,5 +681,3 @@ export default function ApplicationDetailPage() {
     </div>
   );
 }
-
-

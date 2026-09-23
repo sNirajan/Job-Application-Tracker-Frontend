@@ -3,11 +3,26 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import ApplicationsBoard from "./ApplicationsBoard";
+import { FileText } from "lucide-react";
+import type { LatestResume } from "@/lib/types";
+
+type View = "list" | "board";
+
+// "column:direction" pairs the API accepts for sort + order
+const SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Newest added" },
+  { value: "created_at:asc", label: "Oldest added" },
+  { value: "updated_at:desc", label: "Recently updated" },
+  { value: "applied_at:desc", label: "Date applied" },
+  { value: "company:asc", label: "Company A to Z" },
+] as const;
+const VIEW_STORAGE_KEY = "applications-view";
 
 interface Application {
   id: string;
@@ -19,6 +34,7 @@ interface Application {
   salary_max: number | null;
   applied_at: string | null;
   created_at: string;
+  latest_resume: LatestResume | null;
 }
 
 interface ApplicationsResponse {
@@ -68,15 +84,14 @@ const addApplicationSchema = z.object({
 
   url: z.preprocess(
     emptyStringToUndefined,
-    z.string().url("Please enter a valid URL").optional(),
+    z
+      .url({ protocol: /^https?$/, message: "Please enter a valid URL" })
+      .optional(),
   ),
 
   location: z.preprocess(
     emptyStringToUndefined,
-    z
-      .string()
-      .max(255, "Location must be 255 characters or less")
-      .optional(),
+    z.string().max(255, "Location must be 255 characters or less").optional(),
   ),
 });
 
@@ -103,10 +118,36 @@ export default function ApplicationsPage() {
     total_pages: 0,
   });
   const [statusFilter, setStatusFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
+  const [sortValue, setSortValue] = useState<string>(SORT_OPTIONS[0].value);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [addServerError, setAddServerError] = useState("");
   const [error, setError] = useState("");
+  const [view, setView] = useState<View>("list");
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0);
+  const [boardTotal, setBoardTotal] = useState(0);
+
+  // Remember the chosen view between visits. Read after mount so the
+  // server-rendered HTML and the first client render match.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+      if (saved === "list" || saved === "board") setView(saved);
+    } catch {
+      // Storage can be blocked (private mode). The list view is fine.
+    }
+  }, []);
+
+  function changeView(next: View) {
+    setView(next);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, next);
+    } catch {
+      // Not critical
+    }
+  }
 
   const {
     register,
@@ -149,33 +190,53 @@ export default function ApplicationsPage() {
     }
   }, [user, authLoading, router]);
 
+  // Wait until typing pauses before searching, so we don't send a
+  // request on every keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setCompanySearch(searchInput.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Each list request gets a number. Only the newest request may update
+  // the screen, so a slow older response (e.g. for a search the user has
+  // already changed) can't overwrite the current results.
+  const latestRequest = useRef(0);
+
   const fetchApplications = useCallback(
     async (page = 1) => {
+      const requestId = ++latestRequest.current;
+      const isStale = () => requestId !== latestRequest.current;
+
       setLoading(true);
       setError("");
 
       try {
-        const query = statusFilter
-          ? `/api/v1/applications?page=${page}&status=${statusFilter}`
-          : `/api/v1/applications?page=${page}`;
+        const [sort, order] = sortValue.split(":");
+        const params = new URLSearchParams({ page: String(page), sort, order });
+        if (statusFilter) params.set("status", statusFilter);
+        if (companySearch) params.set("company", companySearch);
 
-        const res = await api.get<ApplicationsResponse>(query);
+        const res = await api.get<ApplicationsResponse>(
+          `/api/v1/applications?${params.toString()}`,
+        );
+        if (isStale()) return;
         setApplications(res.data);
         setPagination(res.pagination);
       } catch {
+        if (isStale()) return;
         setError("Could not load applications. Please try again.");
       } finally {
-        setLoading(false);
+        if (!isStale()) setLoading(false);
       }
     },
-    [statusFilter],
+    [statusFilter, companySearch, sortValue],
   );
 
   useEffect(() => {
-    if (user) {
+    if (user && view === "list") {
       void fetchApplications(1);
     }
-  }, [user, fetchApplications]);
+  }, [user, view, fetchApplications]);
 
   function handleToggleAdd() {
     if (showAdd) {
@@ -208,7 +269,11 @@ export default function ApplicationsPage() {
       });
 
       setShowAdd(false);
-      await fetchApplications(1);
+      if (view === "board") {
+        setBoardRefreshKey((key) => key + 1);
+      } else {
+        await fetchApplications(1);
+      }
     } catch (err: unknown) {
       const error = err as { message?: string };
       setAddServerError(error.message || "Failed to add application");
@@ -265,9 +330,11 @@ export default function ApplicationsPage() {
         </div>
       </nav>
 
-      <div className="mx-auto max-w-5xl px-8 py-8">
+      <div
+        className={`mx-auto px-8 py-8 ${view === "board" ? "max-w-7xl" : "max-w-5xl"}`}
+      >
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1
               className="text-2xl font-bold tracking-tight"
@@ -279,18 +346,49 @@ export default function ApplicationsPage() {
               Applications
             </h1>
             <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-              {pagination.total} total
+              {view === "board" ? boardTotal : pagination.total} total
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleToggleAdd}
-            className="rounded-full px-5 py-2 text-sm font-medium transition hover:scale-105"
-            style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
-          >
-            {showAdd ? "Cancel" : "Add application"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View toggle */}
+            <div
+              role="group"
+              aria-label="Choose view"
+              className="flex rounded-full p-1"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                border: "1px solid var(--border-light)",
+              }}
+            >
+              {(["list", "board"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  onClick={() => changeView(option)}
+                  className="rounded-full px-4 py-1.5 text-xs font-medium transition"
+                  style={{
+                    backgroundColor:
+                      view === option ? "var(--accent)" : "transparent",
+                    color:
+                      view === option ? "#FFFFFF" : "var(--text-secondary)",
+                  }}
+                >
+                  {option === "list" ? "List" : "Board"}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleToggleAdd}
+              className="rounded-full px-5 py-2 text-sm font-medium transition hover:scale-105"
+              style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+            >
+              {showAdd ? "Cancel" : "Add application"}
+            </button>
+          </div>
         </div>
 
         {/* Add form */}
@@ -309,7 +407,10 @@ export default function ApplicationsPage() {
               >
                 Add application
               </h2>
-              <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+              <p
+                className="mt-1 text-xs"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Start with the essentials. You can add more details later.
               </p>
             </div>
@@ -349,7 +450,9 @@ export default function ApplicationsPage() {
                     type="text"
                     placeholder="Acme Inc."
                     aria-invalid={Boolean(errors.company)}
-                    aria-describedby={errors.company ? "company-error" : undefined}
+                    aria-describedby={
+                      errors.company ? "company-error" : undefined
+                    }
                     className="w-full rounded-lg px-4 py-3 text-sm outline-none transition"
                     style={getInputStyles(Boolean(errors.company))}
                     {...companyField}
@@ -495,169 +598,238 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        {/* Filter */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setStatusFilter("")}
-            className="rounded-full px-4 py-2 text-xs transition"
-            style={{
-              backgroundColor:
-                statusFilter === "" ? "var(--accent)" : "var(--bg-card)",
-              color: statusFilter === "" ? "#FFFFFF" : "var(--text-secondary)",
-              border:
-                statusFilter === "" ? "none" : "1px solid var(--border-light)",
-            }}
-          >
-            All
-          </button>
-
-          {Object.entries(STATUS_LABELS).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setStatusFilter(key)}
-              className="rounded-full px-4 py-2 text-xs transition"
-              style={{
-                backgroundColor:
-                  statusFilter === key ? "var(--accent)" : "var(--bg-card)",
-                color:
-                  statusFilter === key ? "#FFFFFF" : "var(--text-secondary)",
-                border:
-                  statusFilter === key
-                    ? "none"
-                    : "1px solid var(--border-light)",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Applications list */}
-        {error ? (
-          <div
-            className="rounded-xl p-12 text-center"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-light)",
-            }}
-          >
-            <p className="text-sm" style={{ color: "#991B1B" }}>
-              {error}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => void fetchApplications(1)}
-              className="mt-3 rounded-full px-5 py-2 text-xs font-medium"
-              style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
-            >
-              Try again
-            </button>
-          </div>
-        ) : loading ? (
-          <p style={{ color: "var(--text-muted)" }}>Loading...</p>
-        ) : applications.length === 0 ? (
-          <div
-            className="rounded-xl p-12 text-center"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-light)",
-            }}
-          >
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              No applications yet. Click &quot;Add application&quot; to get
-              started.
-            </p>
-          </div>
+        {view === "board" ? (
+          <ApplicationsBoard
+            refreshKey={boardRefreshKey}
+            onTotalChange={setBoardTotal}
+          />
         ) : (
-          <div className="space-y-3">
-            {applications.map((app) => (
-              <Link
-                key={app.id}
-                href={`/applications/${app.id}`}
-                className="block rounded-xl p-5 transition hover:scale-[1.01]"
+          <>
+            {/* Search + sort */}
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+              <label htmlFor="company-search" className="sr-only">
+                Search by company
+              </label>
+              <input
+                id="company-search"
+                type="search"
+                placeholder="Search by company"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="flex-1 rounded-full px-5 py-2.5 text-sm outline-none"
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border: "1px solid var(--border-light)",
+                  color: "var(--text-primary)",
+                }}
+              />
+
+              <label htmlFor="sort" className="sr-only">
+                Sort by
+              </label>
+              <select
+                id="sort"
+                value={sortValue}
+                onChange={(e) => setSortValue(e.target.value)}
+                className="rounded-full px-4 py-2.5 text-sm outline-none"
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border: "1px solid var(--border-light)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("")}
+                className="rounded-full px-4 py-2 text-xs transition"
+                style={{
+                  backgroundColor:
+                    statusFilter === "" ? "var(--accent)" : "var(--bg-card)",
+                  color:
+                    statusFilter === "" ? "#FFFFFF" : "var(--text-secondary)",
+                  border:
+                    statusFilter === ""
+                      ? "none"
+                      : "1px solid var(--border-light)",
+                }}
+              >
+                All
+              </button>
+
+              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setStatusFilter(key)}
+                  className="rounded-full px-4 py-2 text-xs transition"
+                  style={{
+                    backgroundColor:
+                      statusFilter === key ? "var(--accent)" : "var(--bg-card)",
+                    color:
+                      statusFilter === key
+                        ? "#FFFFFF"
+                        : "var(--text-secondary)",
+                    border:
+                      statusFilter === key
+                        ? "none"
+                        : "1px solid var(--border-light)",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Applications list */}
+            {error ? (
+              <div
+                className="rounded-xl p-12 text-center"
                 style={{
                   backgroundColor: "var(--bg-card)",
                   border: "1px solid var(--border-light)",
                 }}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p
-                      className="text-sm font-semibold"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {app.company}
-                    </p>
+                <p className="text-sm" style={{ color: "#991B1B" }}>
+                  {error}
+                </p>
 
-                    <p
-                      className="mt-1 text-xs"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {app.role}
-                      {app.location && ` · ${app.location}`}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <span
-                      className="rounded-full px-3 py-1 text-xs font-medium"
-                      style={{
-                        backgroundColor: "var(--bg-green)",
-                        color: "var(--accent)",
-                      }}
-                    >
-                      {STATUS_LABELS[app.status] || app.status}
-                    </span>
-
-                    <p
-                      className="mt-2 text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {new Date(app.created_at).toLocaleDateString("en", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination.total_pages > 1 && (
-          <div className="mt-8 flex justify-center gap-2">
-            {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map(
-              (page) => (
                 <button
-                  key={page}
                   type="button"
-                  onClick={() => void fetchApplications(page)}
-                  className="rounded-full px-4 py-2 text-xs transition"
-                  style={{
-                    backgroundColor:
-                      page === pagination.page
-                        ? "var(--accent)"
-                        : "var(--bg-card)",
-                    color:
-                      page === pagination.page
-                        ? "#FFFFFF"
-                        : "var(--text-secondary)",
-                    border:
-                      page === pagination.page
-                        ? "none"
-                        : "1px solid var(--border-light)",
-                  }}
+                  onClick={() => void fetchApplications(1)}
+                  className="mt-3 rounded-full px-5 py-2 text-xs font-medium"
+                  style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
                 >
-                  {page}
+                  Try again
                 </button>
-              ),
+              </div>
+            ) : loading ? (
+              <p style={{ color: "var(--text-muted)" }}>Loading...</p>
+            ) : applications.length === 0 ? (
+              <div
+                className="rounded-xl p-12 text-center"
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border: "1px solid var(--border-light)",
+                }}
+              >
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  {companySearch || statusFilter
+                    ? "No applications match these filters."
+                    : 'No applications yet. Click "Add application" to get started.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {applications.map((app) => (
+                  <Link
+                    key={app.id}
+                    href={`/applications/${app.id}`}
+                    className="block rounded-xl p-5 transition hover:scale-[1.01]"
+                    style={{
+                      backgroundColor: "var(--bg-card)",
+                      border: "1px solid var(--border-light)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="text-sm font-semibold"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {app.company}
+                        </p>
+
+                        <p
+                          className="mt-1 text-xs"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          {app.role}
+                          {app.location && ` · ${app.location}`}
+                        </p>
+
+                        {app.latest_resume && (
+                          <p
+                            className="mt-2 flex items-center gap-1.5 text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            <FileText className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">
+                              {app.latest_resume.original_name}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <span
+                          className="rounded-full px-3 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: "var(--bg-green)",
+                            color: "var(--accent)",
+                          }}
+                        >
+                          {STATUS_LABELS[app.status] || app.status}
+                        </span>
+
+                        <p
+                          className="mt-2 text-xs"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          {new Date(app.created_at).toLocaleDateString("en", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
-          </div>
+
+            {/* Pagination */}
+            {pagination.total_pages > 1 && (
+              <div className="mt-8 flex justify-center gap-2">
+                {Array.from(
+                  { length: pagination.total_pages },
+                  (_, i) => i + 1,
+                ).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => void fetchApplications(page)}
+                    className="rounded-full px-4 py-2 text-xs transition"
+                    style={{
+                      backgroundColor:
+                        page === pagination.page
+                          ? "var(--accent)"
+                          : "var(--bg-card)",
+                      color:
+                        page === pagination.page
+                          ? "#FFFFFF"
+                          : "var(--text-secondary)",
+                      border:
+                        page === pagination.page
+                          ? "none"
+                          : "1px solid var(--border-light)",
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
