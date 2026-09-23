@@ -3,6 +3,9 @@
 /*
  * Design tokens.
  *
+ * Surfaces are a bright, near-white neutral tinted a touch toward the
+ * brand green, so white cards still separate from the page.
+ *
  * Text and border values are chosen to meet WCAG AA on every surface
  * they are used on (body text 4.5:1, UI borders and focus rings 3:1).
  * Ratios in the comments are the worst case across all backgrounds.
@@ -10,7 +13,7 @@
 
 :root {
   /* Text */
-  --text-primary: #171717; /* 13.8:1 worst case */
+  --text-primary: #141715; /* 14.2:1 worst case */
   --text-secondary: #464d59; /* 6.5:1 worst case */
   --text-muted: #5a616e; /* 4.8:1 worst case */
   --text-on-accent: #ffffff; /* 7.4:1 on accent */
@@ -21,17 +24,17 @@
   --accent-quiet: #dce7e2;
 
   /* Backgrounds */
-  --bg-page: #f7f3ec;
-  --bg-warm: #e9e1d6;
+  --bg-page: #f7f9f8;
+  --bg-warm: #eaeeec;
   --bg-green: #dce7e2;
   --bg-card: #ffffff;
-  --bg-card-alt: #f8f5f0;
-  --bg-subtle: #fcfbf8;
+  --bg-card-alt: #f1f4f3;
+  --bg-subtle: #fbfcfc;
 
   /* Borders: -light separates, default divides, -strong outlines controls */
-  --border-light: #ece6dd;
-  --border: #d8d1c7;
-  --border-strong: #8c8474; /* 3.7:1, for inputs and other controls */
+  --border-light: #edf0ef;
+  --border: #d7dedb;
+  --border-strong: #84908b; /* 3.3:1, for inputs and other controls */
 
   /* Status */
   --danger: #b91c1c;
