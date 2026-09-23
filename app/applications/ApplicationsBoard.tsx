@@ -270,14 +270,17 @@ export default function ApplicationsBoard({
           border: "1px solid var(--border-light)",
         }}
       >
-        <p className="text-sm" style={{ color: "#991B1B" }}>
+        <p className="text-sm" style={{ color: "var(--danger-text)" }}>
           {loadError}
         </p>
         <button
           type="button"
           onClick={() => void load()}
           className="mt-3 rounded-full px-5 py-2 text-xs font-medium"
-          style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+          style={{
+            backgroundColor: "var(--accent)",
+            color: "var(--text-on-accent)",
+          }}
         >
           Try again
         </button>
@@ -302,9 +305,9 @@ export default function ApplicationsBoard({
           role="alert"
           className="mb-4 flex items-center justify-between gap-4 rounded-lg px-4 py-3 text-sm"
           style={{
-            backgroundColor: "#FEF2F2",
-            color: "#991B1B",
-            border: "1px solid #FECACA",
+            backgroundColor: "var(--danger-bg)",
+            color: "var(--danger-text)",
+            border: "1px solid var(--danger-border)",
           }}
         >
           <span>{moveError}</span>
@@ -409,7 +412,7 @@ function BoardColumn({
     >
       <header className="mb-3 flex items-center justify-between px-1">
         <h2
-          className="text-xs font-semibold uppercase tracking-wide"
+          className="text-sm font-semibold"
           style={{
             color: isTerminal(status)
               ? "var(--text-muted)"
@@ -662,7 +665,10 @@ function MoveDialog({
           <button
             type="submit"
             className="rounded-full px-5 py-2 text-sm font-medium"
-            style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+            style={{
+              backgroundColor: "var(--accent)",
+              color: "var(--text-on-accent)",
+            }}
           >
             Move
           </button>

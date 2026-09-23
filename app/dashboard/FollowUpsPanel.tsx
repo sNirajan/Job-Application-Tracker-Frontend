@@ -122,7 +122,11 @@ export default function FollowUpsPanel() {
       </p>
 
       {error && (
-        <p role="alert" className="mt-3 text-sm" style={{ color: "#991B1B" }}>
+        <p
+          role="alert"
+          className="mt-3 text-sm"
+          style={{ color: "var(--danger-text)" }}
+        >
           {error}
         </p>
       )}
@@ -135,13 +139,17 @@ export default function FollowUpsPanel() {
               key={`r-${reminder.id}`}
               className="flex items-center justify-between gap-4 rounded-xl px-4 py-3"
               style={{
-                backgroundColor: overdue ? "#FFFBEB" : "var(--bg-card-alt)",
+                backgroundColor: overdue
+                  ? "var(--warn-bg)"
+                  : "var(--bg-card-alt)",
               }}
             >
               <div className="flex min-w-0 items-start gap-3">
                 <Bell
                   className="mt-0.5 h-4 w-4 shrink-0"
-                  style={{ color: overdue ? "#B45309" : "var(--accent)" }}
+                  style={{
+                    color: overdue ? "var(--warn-text)" : "var(--accent)",
+                  }}
                 />
                 <div className="min-w-0 text-sm">
                   <Link
@@ -153,7 +161,9 @@ export default function FollowUpsPanel() {
                   </Link>
                   <p
                     className="text-xs"
-                    style={{ color: overdue ? "#B45309" : "var(--text-muted)" }}
+                    style={{
+                      color: overdue ? "var(--warn-text)" : "var(--text-muted)",
+                    }}
                   >
                     {overdue ? "Overdue · " : ""}
                     {formatWhen(reminder.remind_at)}

@@ -11,8 +11,8 @@ import {
   getInputStyles,
   inputClassName,
   labelClassName,
-  primaryButtonStyle,
-  secondaryButtonStyle,
+  primaryButtonClass,
+  secondaryButtonClass,
 } from "@/lib/ui";
 
 export interface EditableApplication {
@@ -147,7 +147,7 @@ export default function EditApplicationForm({
           <p
             id={`edit-${name}-error`}
             className="mt-2 text-xs"
-            style={{ color: "#B91C1C" }}
+            style={{ color: "var(--danger)" }}
           >
             {error.message}
           </p>
@@ -211,16 +211,14 @@ export default function EditApplicationForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-full px-6 py-2 text-sm font-medium transition"
-          style={primaryButtonStyle}
+          className={primaryButtonClass}
         >
           {isSubmitting ? "Saving..." : "Save changes"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-full px-5 py-2 text-sm font-medium transition"
-          style={secondaryButtonStyle}
+          className={secondaryButtonClass}
         >
           Cancel
         </button>

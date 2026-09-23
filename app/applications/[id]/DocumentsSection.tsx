@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Eye, FileText, Trash2, Upload } from "lucide-react";
 import { api, apiUrl } from "@/lib/api";
 import type { ApplicationDocument, DocumentKind } from "@/lib/types";
-import { cardStyle, errorBoxStyle, errorMessage } from "@/lib/ui";
+import {
+  errorBoxStyle,
+  errorMessage,
+  sectionClassName,
+  sectionStyle,
+} from "@/lib/ui";
 import DocumentPreview from "./DocumentPreview";
 
 // Browsers can show PDFs; Word files have to be downloaded to open
@@ -126,10 +131,10 @@ export default function DocumentsSection({
   }
 
   return (
-    <section className="mb-6 rounded-xl p-6" style={cardStyle}>
+    <section className={sectionClassName} style={sectionStyle}>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="text-sm font-semibold"
+          className="text-base font-semibold tracking-tight"
           style={{ color: "var(--text-primary)" }}
         >
           Documents
@@ -270,7 +275,7 @@ export default function DocumentsSection({
                     onClick={() => setPreviewing(doc)}
                     aria-label={`Preview ${doc.original_name}`}
                     title="Preview"
-                    className="rounded-full p-2 transition hover:bg-white"
+                    className="btn btn-quiet inline-flex h-10 w-10 items-center justify-center"
                     style={{ color: "var(--text-secondary)" }}
                   >
                     <Eye className="h-4 w-4" />
@@ -280,7 +285,7 @@ export default function DocumentsSection({
                   href={apiUrl(`${base}/${doc.id}/download`)}
                   onClick={(e) => void handleDownload(e, doc)}
                   aria-label={`Download ${doc.original_name}`}
-                  className="rounded-full p-2 transition hover:bg-white"
+                  className="btn btn-quiet inline-flex h-10 w-10 items-center justify-center"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   <Download className="h-4 w-4" />
@@ -289,7 +294,7 @@ export default function DocumentsSection({
                   type="button"
                   onClick={() => void handleDelete(doc)}
                   aria-label={`Delete ${doc.original_name}`}
-                  className="rounded-full p-2 text-red-700 transition hover:bg-red-50"
+                  className="btn btn-danger-quiet inline-flex h-10 w-10 items-center justify-center"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

@@ -8,14 +8,15 @@ import { Mail, Pencil, Phone, Trash2, UserRound } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Contact } from "@/lib/types";
 import {
-  cardStyle,
+  sectionClassName,
+  sectionStyle,
   errorBoxStyle,
   errorMessage,
   getInputStyles,
   inputClassName,
   labelClassName,
-  primaryButtonStyle,
-  secondaryButtonStyle,
+  primaryButtonClass,
+  secondaryButtonClass,
 } from "@/lib/ui";
 
 function emptyToNull(value: unknown) {
@@ -153,7 +154,7 @@ export default function ContactsSection({
           {...register(name)}
         />
         {fieldError && (
-          <p className="mt-2 text-xs" style={{ color: "#B91C1C" }}>
+          <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>
             {fieldError.message}
           </p>
         )}
@@ -162,10 +163,10 @@ export default function ContactsSection({
   };
 
   return (
-    <section className="mb-6 rounded-xl p-6" style={cardStyle}>
+    <section className={sectionClassName} style={sectionStyle}>
       <div className="mb-4 flex items-center justify-between">
         <h2
-          className="text-sm font-semibold"
+          className="text-base font-semibold tracking-tight"
           style={{ color: "var(--text-primary)" }}
         >
           Contacts
@@ -174,8 +175,7 @@ export default function ContactsSection({
           <button
             type="button"
             onClick={() => openForm()}
-            className="rounded-full px-4 py-1.5 text-xs font-medium"
-            style={secondaryButtonStyle}
+            className={secondaryButtonClass}
           >
             Add contact
           </button>
@@ -196,11 +196,8 @@ export default function ContactsSection({
         <form
           noValidate
           onSubmit={handleSubmit(onSubmit)}
-          className="mb-5 space-y-4 rounded-lg p-4"
-          style={{
-            backgroundColor: "var(--bg-subtle)",
-            border: "1px solid var(--border-light)",
-          }}
+          className="mb-6 space-y-4 pb-6"
+          style={{ borderBottom: "1px solid var(--border-light)" }}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {field("name", "Name", { type: "text", placeholder: "Jane Smith" })}
@@ -241,8 +238,7 @@ export default function ContactsSection({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-full px-5 py-2 text-xs font-medium"
-              style={primaryButtonStyle}
+              className={primaryButtonClass}
             >
               {isSubmitting
                 ? "Saving..."
@@ -253,8 +249,7 @@ export default function ContactsSection({
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="rounded-full px-5 py-2 text-xs font-medium"
-              style={secondaryButtonStyle}
+              className={secondaryButtonClass}
             >
               Cancel
             </button>
@@ -350,7 +345,7 @@ export default function ContactsSection({
                   type="button"
                   onClick={() => openForm(contact)}
                   aria-label={`Edit ${contact.name}`}
-                  className="rounded-full p-2 transition hover:bg-white"
+                  className="btn btn-quiet inline-flex h-10 w-10 items-center justify-center"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   <Pencil className="h-4 w-4" />
@@ -359,7 +354,7 @@ export default function ContactsSection({
                   type="button"
                   onClick={() => void handleDelete(contact)}
                   aria-label={`Remove ${contact.name}`}
-                  className="rounded-full p-2 text-red-700 transition hover:bg-red-50"
+                  className="btn btn-danger-quiet inline-flex h-10 w-10 items-center justify-center"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

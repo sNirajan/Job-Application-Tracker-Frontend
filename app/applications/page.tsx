@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import AppNav from "@/components/AppNav";
 import { api } from "@/lib/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import ApplicationsBoard from "./ApplicationsBoard";
 import { FileText } from "lucide-react";
 import type { LatestResume } from "@/lib/types";
+import type { Status } from "@/lib/statusMachine";
+import { errorBoxStyle, getInputStyles, statusBadgeStyle } from "@/lib/ui";
 
 type View = "list" | "board";
 
@@ -98,17 +101,8 @@ const addApplicationSchema = z.object({
 type AddApplicationFormInput = z.input<typeof addApplicationSchema>;
 type AddApplicationFormValues = z.output<typeof addApplicationSchema>;
 
-function getInputStyles(hasError: boolean) {
-  return {
-    backgroundColor: "var(--bg-card-alt)",
-    border: `1px solid ${hasError ? "#FCA5A5" : "var(--border)"}`,
-    color: "var(--text-primary)",
-    boxShadow: hasError ? "0 0 0 4px rgba(252, 165, 165, 0.16)" : "none",
-  };
-}
-
 export default function ApplicationsPage() {
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [applications, setApplications] = useState<Application[]>([]);
@@ -293,42 +287,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--bg-page)" }}>
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-8 py-5 lg:px-24">
-        <Link
-          href="/dashboard"
-          className="text-xl font-bold tracking-tight"
-          style={{
-            fontFamily: "var(--font-manrope)",
-            color: "var(--text-primary)",
-          }}
-        >
-          JobTracker
-        </Link>
-
-        <div className="flex items-center gap-6">
-          <Link
-            href="/applications"
-            className="text-sm font-semibold transition"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Applications
-          </Link>
-
-          <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {user.name}
-          </span>
-
-          <button
-            type="button"
-            onClick={logout}
-            className="text-sm font-medium transition"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Sign out
-          </button>
-        </div>
-      </nav>
+      <AppNav />
 
       <div
         className={`mx-auto px-8 py-8 ${view === "board" ? "max-w-7xl" : "max-w-5xl"}`}
@@ -372,7 +331,9 @@ export default function ApplicationsPage() {
                     backgroundColor:
                       view === option ? "var(--accent)" : "transparent",
                     color:
-                      view === option ? "#FFFFFF" : "var(--text-secondary)",
+                      view === option
+                        ? "var(--text-on-accent)"
+                        : "var(--text-secondary)",
                   }}
                 >
                   {option === "list" ? "List" : "Board"}
@@ -383,8 +344,7 @@ export default function ApplicationsPage() {
             <button
               type="button"
               onClick={handleToggleAdd}
-              className="rounded-full px-5 py-2 text-sm font-medium transition hover:scale-105"
-              style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+              className="btn btn-sm btn-primary"
             >
               {showAdd ? "Cancel" : "Add application"}
             </button>
@@ -420,11 +380,7 @@ export default function ApplicationsPage() {
                 role="alert"
                 aria-live="polite"
                 className="mb-4 rounded-lg px-4 py-3 text-sm"
-                style={{
-                  backgroundColor: "#FEF2F2",
-                  color: "#991B1B",
-                  border: "1px solid #FECACA",
-                }}
+                style={errorBoxStyle}
               >
                 {addServerError}
               </div>
@@ -453,7 +409,7 @@ export default function ApplicationsPage() {
                     aria-describedby={
                       errors.company ? "company-error" : undefined
                     }
-                    className="w-full rounded-lg px-4 py-3 text-sm outline-none transition"
+                    className="field w-full px-4 py-3 text-sm outline-none"
                     style={getInputStyles(Boolean(errors.company))}
                     {...companyField}
                   />
@@ -462,7 +418,7 @@ export default function ApplicationsPage() {
                     <p
                       id="company-error"
                       className="mt-2 text-xs"
-                      style={{ color: "#B91C1C" }}
+                      style={{ color: "var(--danger)" }}
                     >
                       {errors.company.message}
                     </p>
@@ -484,7 +440,7 @@ export default function ApplicationsPage() {
                     placeholder="Frontend Developer"
                     aria-invalid={Boolean(errors.role)}
                     aria-describedby={errors.role ? "role-error" : undefined}
-                    className="w-full rounded-lg px-4 py-3 text-sm outline-none transition"
+                    className="field w-full px-4 py-3 text-sm outline-none"
                     style={getInputStyles(Boolean(errors.role))}
                     {...roleField}
                   />
@@ -493,7 +449,7 @@ export default function ApplicationsPage() {
                     <p
                       id="role-error"
                       className="mt-2 text-xs"
-                      style={{ color: "#B91C1C" }}
+                      style={{ color: "var(--danger)" }}
                     >
                       {errors.role.message}
                     </p>
@@ -515,7 +471,7 @@ export default function ApplicationsPage() {
                     placeholder="https://company.com/jobs/123"
                     aria-invalid={Boolean(errors.url)}
                     aria-describedby={errors.url ? "url-error" : undefined}
-                    className="w-full rounded-lg px-4 py-3 text-sm outline-none transition"
+                    className="field w-full px-4 py-3 text-sm outline-none"
                     style={getInputStyles(Boolean(errors.url))}
                     {...urlField}
                   />
@@ -524,7 +480,7 @@ export default function ApplicationsPage() {
                     <p
                       id="url-error"
                       className="mt-2 text-xs"
-                      style={{ color: "#B91C1C" }}
+                      style={{ color: "var(--danger)" }}
                     >
                       {errors.url.message}
                     </p>
@@ -548,7 +504,7 @@ export default function ApplicationsPage() {
                     aria-describedby={
                       errors.location ? "location-error" : undefined
                     }
-                    className="w-full rounded-lg px-4 py-3 text-sm outline-none transition"
+                    className="field w-full px-4 py-3 text-sm outline-none"
                     style={getInputStyles(Boolean(errors.location))}
                     {...locationField}
                   />
@@ -557,7 +513,7 @@ export default function ApplicationsPage() {
                     <p
                       id="location-error"
                       className="mt-2 text-xs"
-                      style={{ color: "#B91C1C" }}
+                      style={{ color: "var(--danger)" }}
                     >
                       {errors.location.message}
                     </p>
@@ -569,14 +525,7 @@ export default function ApplicationsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-full px-6 py-2 text-sm font-medium transition"
-                  style={{
-                    backgroundColor: isSubmitting
-                      ? "var(--border)"
-                      : "var(--accent)",
-                    color: isSubmitting ? "var(--text-muted)" : "#FFFFFF",
-                    cursor: isSubmitting ? "wait" : "pointer",
-                  }}
+                  className="btn btn-md btn-primary"
                 >
                   {isSubmitting ? "Saving..." : "Save application"}
                 </button>
@@ -584,12 +533,7 @@ export default function ApplicationsPage() {
                 <button
                   type="button"
                   onClick={handleToggleAdd}
-                  className="rounded-full px-5 py-2 text-sm font-medium transition"
-                  style={{
-                    backgroundColor: "var(--bg-card-alt)",
-                    color: "var(--text-secondary)",
-                    border: "1px solid var(--border-light)",
-                  }}
+                  className="btn btn-md btn-secondary"
                 >
                   Cancel
                 </button>
@@ -616,12 +560,7 @@ export default function ApplicationsPage() {
                 placeholder="Search by company"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="flex-1 rounded-full px-5 py-2.5 text-sm outline-none"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border: "1px solid var(--border-light)",
-                  color: "var(--text-primary)",
-                }}
+                className="field flex-1 px-4 py-2.5 text-sm outline-none"
               />
 
               <label htmlFor="sort" className="sr-only">
@@ -631,12 +570,7 @@ export default function ApplicationsPage() {
                 id="sort"
                 value={sortValue}
                 onChange={(e) => setSortValue(e.target.value)}
-                className="rounded-full px-4 py-2.5 text-sm outline-none"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border: "1px solid var(--border-light)",
-                  color: "var(--text-secondary)",
-                }}
+                className="field px-3 py-2.5 text-sm outline-none"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -656,7 +590,9 @@ export default function ApplicationsPage() {
                   backgroundColor:
                     statusFilter === "" ? "var(--accent)" : "var(--bg-card)",
                   color:
-                    statusFilter === "" ? "#FFFFFF" : "var(--text-secondary)",
+                    statusFilter === ""
+                      ? "var(--text-on-accent)"
+                      : "var(--text-secondary)",
                   border:
                     statusFilter === ""
                       ? "none"
@@ -677,7 +613,7 @@ export default function ApplicationsPage() {
                       statusFilter === key ? "var(--accent)" : "var(--bg-card)",
                     color:
                       statusFilter === key
-                        ? "#FFFFFF"
+                        ? "var(--text-on-accent)"
                         : "var(--text-secondary)",
                     border:
                       statusFilter === key
@@ -699,15 +635,14 @@ export default function ApplicationsPage() {
                   border: "1px solid var(--border-light)",
                 }}
               >
-                <p className="text-sm" style={{ color: "#991B1B" }}>
+                <p className="text-sm" style={{ color: "var(--danger-text)" }}>
                   {error}
                 </p>
 
                 <button
                   type="button"
                   onClick={() => void fetchApplications(1)}
-                  className="mt-3 rounded-full px-5 py-2 text-xs font-medium"
-                  style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+                  className="btn btn-sm btn-primary mt-3"
                 >
                   Try again
                 </button>
@@ -734,7 +669,7 @@ export default function ApplicationsPage() {
                   <Link
                     key={app.id}
                     href={`/applications/${app.id}`}
-                    className="block rounded-xl p-5 transition hover:scale-[1.01]"
+                    className="block rounded-xl p-5 transition-colors hover:border-[var(--border-strong)]"
                     style={{
                       backgroundColor: "var(--bg-card)",
                       border: "1px solid var(--border-light)",
@@ -773,10 +708,7 @@ export default function ApplicationsPage() {
                       <div className="text-right">
                         <span
                           className="rounded-full px-3 py-1 text-xs font-medium"
-                          style={{
-                            backgroundColor: "var(--bg-green)",
-                            color: "var(--accent)",
-                          }}
+                          style={statusBadgeStyle(app.status as Status)}
                         >
                           {STATUS_LABELS[app.status] || app.status}
                         </span>
@@ -816,7 +748,7 @@ export default function ApplicationsPage() {
                           : "var(--bg-card)",
                       color:
                         page === pagination.page
-                          ? "#FFFFFF"
+                          ? "var(--text-on-accent)"
                           : "var(--text-secondary)",
                       border:
                         page === pagination.page
