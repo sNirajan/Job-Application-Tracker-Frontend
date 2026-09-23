@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { errorBoxStyle, getInputStyles } from "@/lib/ui";
 
 // Keeping frontend validation aligned with the backend rules.
 
@@ -35,20 +36,14 @@ function PreviewRow({ label, value }: PreviewRowProps) {
       <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
         {label}
       </span>
-      <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+      <span
+        className="text-sm font-semibold"
+        style={{ color: "var(--text-primary)" }}
+      >
         {value}
       </span>
     </div>
   );
-}
-
-function getInputStyles(hasError: boolean) {
-  return {
-    backgroundColor: "var(--bg-card)",
-    color: "var(--text-primary)",
-    border: `1px solid ${hasError ? "#FCA5A5" : "var(--border)"}`,
-    boxShadow: hasError ? "0 0 0 4px rgba(252, 165, 165, 0.18)" : "none",
-  };
 }
 
 export default function LoginPage() {
@@ -137,31 +132,25 @@ export default function LoginPage() {
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-lg">
               <div className="max-w-md">
-                
-
                 <h1
-                  className="mt-5 text-4xl font-bold tracking-tight xl:text-5xl text-center"
+                  className="mt-5 text-4xl font-bold tracking-[-0.02em] xl:text-5xl"
                   style={{
                     fontFamily: "var(--font-manrope)",
                     color: "var(--text-primary)",
                     lineHeight: "1.08",
                   }}
                 >
-                     Your job search, 
-                  <br />
-                  finally in one place.
+                  Your job search, finally in one place.
                 </h1>
-
-               
               </div>
 
               {/* Product preview card */}
               <div
-                className="mt-10 max-w-md rounded-[24px] border p-5 backdrop-blur-sm"
+                className="mt-10 max-w-md rounded-xl border p-5"
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.62)",
-                  borderColor: "rgba(15, 23, 42, 0.08)",
-                  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                  backgroundColor: "var(--bg-card)",
+                  borderColor: "var(--border-light)",
+                  boxShadow: "var(--shadow-card)",
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -183,8 +172,8 @@ export default function LoginPage() {
                   <span
                     className="rounded-full px-3 py-1 text-xs font-medium"
                     style={{
-                      backgroundColor: "rgba(16, 185, 129, 0.10)",
-                      color: "#065F46",
+                      backgroundColor: "var(--bg-green)",
+                      color: "var(--accent)",
                     }}
                   >
                     On track
@@ -212,7 +201,6 @@ export default function LoginPage() {
       {/* Right panel */}
       <section className="flex min-h-screen items-center justify-center px-6 py-10 sm:px-8">
         <div className="w-full max-w-sm">
-          
           {/* Mobile logo */}
           <Link
             href="/"
@@ -235,7 +223,10 @@ export default function LoginPage() {
             >
               Welcome back
             </h2>
-            <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Sign in to continue managing your applications
             </p>
           </div>
@@ -245,11 +236,7 @@ export default function LoginPage() {
               role="alert"
               aria-live="polite"
               className="mt-6 rounded-xl px-4 py-3 text-sm"
-              style={{
-                backgroundColor: "#FEF2F2",
-                color: "#991B1B",
-                border: "1px solid #FECACA",
-              }}
+              style={errorBoxStyle}
             >
               {serverError}
             </div>
@@ -276,7 +263,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                className="field w-full px-4 py-3 text-sm outline-none"
                 style={getInputStyles(Boolean(errors.email))}
                 {...emailField}
               />
@@ -285,7 +272,7 @@ export default function LoginPage() {
                 <p
                   id="email-error"
                   className="mt-2 text-xs"
-                  style={{ color: "#B91C1C" }}
+                  style={{ color: "var(--danger)" }}
                 >
                   {errors.email.message}
                 </p>
@@ -307,8 +294,10 @@ export default function LoginPage() {
                 placeholder="Minimum 8 characters"
                 autoComplete="current-password"
                 aria-invalid={Boolean(errors.password)}
-                aria-describedby={errors.password ? "password-error" : undefined}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
+                className="field w-full px-4 py-3 text-sm outline-none"
                 style={getInputStyles(Boolean(errors.password))}
                 {...passwordField}
               />
@@ -317,7 +306,7 @@ export default function LoginPage() {
                 <p
                   id="password-error"
                   className="mt-2 text-xs"
-                  style={{ color: "#B91C1C" }}
+                  style={{ color: "var(--danger)" }}
                 >
                   {errors.password.message}
                 </p>
@@ -327,12 +316,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-xl py-3 text-sm font-medium transition"
-              style={{
-                backgroundColor: isSubmitting ? "var(--border)" : "var(--accent)",
-                color: isSubmitting ? "var(--text-muted)" : "#FFFFFF",
-                cursor: isSubmitting ? "wait" : "pointer",
-              }}
+              className="btn btn-md btn-primary w-full"
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
@@ -356,4 +340,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

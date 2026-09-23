@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import AppNav from "@/components/AppNav";
 import { api } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { z } from "zod";
+import {
+  errorBoxStyle,
+  getInputStyles,
+  sectionClassName,
+  sectionStyle,
+  statusBadgeStyle,
+} from "@/lib/ui";
 import EditApplicationForm from "./EditApplicationForm";
 import ContactsSection from "./ContactsSection";
 import RemindersSection from "./RemindersSection";
@@ -93,17 +101,8 @@ function formatMoney(value: number) {
   return `$${value.toLocaleString()}`;
 }
 
-function getInputStyles(hasError: boolean) {
-  return {
-    backgroundColor: "var(--bg-card-alt)",
-    border: `1px solid ${hasError ? "#FCA5A5" : "var(--border)"}`,
-    color: "var(--text-primary)",
-    boxShadow: hasError ? "0 0 0 4px rgba(252, 165, 165, 0.16)" : "none",
-  };
-}
-
 export default function ApplicationDetailPage() {
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -215,37 +214,7 @@ export default function ApplicationDetailPage() {
         className="min-h-screen"
         style={{ backgroundColor: "var(--bg-page)" }}
       >
-        <nav className="flex items-center justify-between px-8 py-5 lg:px-24">
-          <Link
-            href="/dashboard"
-            className="text-xl font-bold tracking-tight"
-            style={{
-              fontFamily: "var(--font-manrope)",
-              color: "var(--text-primary)",
-            }}
-          >
-            JobTracker
-          </Link>
-
-          <div className="flex items-center gap-6">
-            <Link
-              href="/applications"
-              className="text-sm font-medium transition"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Applications
-            </Link>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="text-sm font-medium transition"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Sign out
-            </button>
-          </div>
-        </nav>
+        <AppNav />
 
         <div className="mx-auto max-w-3xl px-8 py-12">
           <div
@@ -255,7 +224,7 @@ export default function ApplicationDetailPage() {
               border: "1px solid var(--border-light)",
             }}
           >
-            <p className="text-sm" style={{ color: "#991B1B" }}>
+            <p className="text-sm" style={{ color: "var(--danger-text)" }}>
               {pageError}
             </p>
 
@@ -263,21 +232,12 @@ export default function ApplicationDetailPage() {
               <button
                 type="button"
                 onClick={() => void fetchData()}
-                className="rounded-full px-5 py-2 text-xs font-medium"
-                style={{ backgroundColor: "var(--accent)", color: "#FFFFFF" }}
+                className="btn btn-sm btn-primary"
               >
                 Try again
               </button>
 
-              <Link
-                href="/applications"
-                className="rounded-full px-5 py-2 text-xs font-medium"
-                style={{
-                  backgroundColor: "var(--bg-card-alt)",
-                  color: "var(--text-secondary)",
-                  border: "1px solid var(--border-light)",
-                }}
-              >
+              <Link href="/applications" className="btn btn-sm btn-secondary">
                 Back to applications
               </Link>
             </div>
@@ -293,42 +253,7 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--bg-page)" }}>
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-8 py-5 lg:px-24">
-        <Link
-          href="/dashboard"
-          className="text-xl font-bold tracking-tight"
-          style={{
-            fontFamily: "var(--font-manrope)",
-            color: "var(--text-primary)",
-          }}
-        >
-          JobTracker
-        </Link>
-
-        <div className="flex items-center gap-6">
-          <Link
-            href="/applications"
-            className="text-sm font-medium transition"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Applications
-          </Link>
-
-          <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {user.name}
-          </span>
-
-          <button
-            type="button"
-            onClick={logout}
-            className="text-sm font-medium transition"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Sign out
-          </button>
-        </div>
-      </nav>
+      <AppNav />
 
       <div className="mx-auto max-w-3xl px-8 py-8">
         {/* Back link */}
@@ -364,26 +289,17 @@ export default function ApplicationDetailPage() {
 
           <span
             className="rounded-full px-4 py-2 text-xs font-medium"
-            style={{
-              backgroundColor: "var(--bg-green)",
-              color: "var(--accent)",
-            }}
+            style={statusBadgeStyle(application.status)}
           >
             {STATUS_LABELS[application.status]}
           </span>
         </div>
 
         {/* Details */}
-        <div
-          className="mb-6 rounded-xl p-6"
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border-light)",
-          }}
-        >
+        <section className={sectionClassName} style={sectionStyle}>
           <div className="mb-4 flex items-center justify-between">
             <h2
-              className="text-sm font-semibold"
+              className="text-base font-semibold tracking-tight"
               style={{ color: "var(--text-primary)" }}
             >
               {isEditing ? "Edit details" : "Details"}
@@ -393,12 +309,7 @@ export default function ApplicationDetailPage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium"
-                style={{
-                  backgroundColor: "var(--bg-card-alt)",
-                  color: "var(--text-secondary)",
-                  border: "1px solid var(--border-light)",
-                }}
+                className="btn btn-sm btn-secondary"
               >
                 <Pencil className="h-3 w-3" />
                 Edit
@@ -495,19 +406,13 @@ export default function ApplicationDetailPage() {
               )}
             </>
           )}
-        </div>
+        </section>
 
         {/* Status transitions */}
         {application.available_transitions.length > 0 && (
-          <div
-            className="mb-6 rounded-xl p-6"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-light)",
-            }}
-          >
+          <section className={sectionClassName} style={sectionStyle}>
             <h2
-              className="mb-4 text-sm font-semibold"
+              className="mb-4 text-base font-semibold tracking-tight"
               style={{ color: "var(--text-primary)" }}
             >
               Update status
@@ -531,7 +436,7 @@ export default function ApplicationDetailPage() {
                 setTransitionError("");
               }}
               disabled={transitioning !== ""}
-              className="mb-4 w-full rounded-lg px-4 py-3 text-sm outline-none transition"
+              className="field mb-4 w-full px-4 py-3 text-sm outline-none"
               style={getInputStyles(noteHasError)}
             />
 
@@ -540,11 +445,7 @@ export default function ApplicationDetailPage() {
                 role="alert"
                 aria-live="polite"
                 className="mb-4 rounded-lg px-4 py-3 text-sm"
-                style={{
-                  backgroundColor: "#FEF2F2",
-                  color: "#991B1B",
-                  border: "1px solid #FECACA",
-                }}
+                style={errorBoxStyle}
               >
                 {transitionError}
               </div>
@@ -557,21 +458,17 @@ export default function ApplicationDetailPage() {
                   type="button"
                   onClick={() => void handleTransition(status)}
                   disabled={transitioning !== ""}
-                  className="rounded-full px-4 py-2 text-xs font-medium transition hover:scale-105"
+                  className="btn btn-sm"
                   style={{
                     backgroundColor:
-                      transitioning === status
-                        ? "var(--border)"
-                        : status === "rejected" || status === "withdrawn"
-                          ? "var(--bg-card-alt)"
-                          : "var(--bg-green)",
+                      status === "rejected" || status === "withdrawn"
+                        ? "var(--bg-card)"
+                        : "var(--bg-green)",
                     color:
-                      transitioning === status
-                        ? "var(--text-muted)"
-                        : status === "rejected" || status === "withdrawn"
-                          ? "var(--text-secondary)"
-                          : "var(--accent)",
-                    border: "1px solid var(--border-light)",
+                      status === "rejected" || status === "withdrawn"
+                        ? "var(--text-secondary)"
+                        : "var(--accent)",
+                    border: "1px solid var(--border)",
                     cursor: transitioning ? "wait" : "pointer",
                   }}
                 >
@@ -581,7 +478,7 @@ export default function ApplicationDetailPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         <RemindersSection applicationId={application.id} />
@@ -591,15 +488,9 @@ export default function ApplicationDetailPage() {
         <DocumentsSection applicationId={application.id} />
 
         {/* Timeline */}
-        <div
-          className="mb-6 rounded-xl p-6"
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border-light)",
-          }}
-        >
+        <section className={sectionClassName} style={sectionStyle}>
           <h2
-            className="mb-4 text-sm font-semibold"
+            className="mb-4 text-base font-semibold tracking-tight"
             style={{ color: "var(--text-primary)" }}
           >
             Timeline
@@ -656,13 +547,16 @@ export default function ApplicationDetailPage() {
               ))}
             </div>
           )}
-        </div>
+        </section>
 
         {/* Delete */}
         <div className="flex justify-end">
           <div className="text-right">
             {deleteError && (
-              <p className="mb-2 text-xs" style={{ color: "#991B1B" }}>
+              <p
+                className="mb-2 text-xs"
+                style={{ color: "var(--danger-text)" }}
+              >
                 {deleteError}
               </p>
             )}
@@ -670,7 +564,7 @@ export default function ApplicationDetailPage() {
             <button
               type="button"
               onClick={handleDelete}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
+              className="btn btn-sm btn-danger-quiet"
             >
               <Trash2 className="h-4 w-4" />
               Delete application

@@ -5,14 +5,15 @@ import { Bell, Check, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Reminder } from "@/lib/types";
 import {
-  cardStyle,
+  sectionClassName,
+  sectionStyle,
   errorBoxStyle,
   errorMessage,
   getInputStyles,
   inputClassName,
   labelClassName,
-  primaryButtonStyle,
-  secondaryButtonStyle,
+  primaryButtonClass,
+  secondaryButtonClass,
 } from "@/lib/ui";
 
 // Quick picks land at 9am local time on the chosen day
@@ -127,10 +128,10 @@ export default function RemindersSection({
   const now = Date.now();
 
   return (
-    <section className="mb-6 rounded-xl p-6" style={cardStyle}>
+    <section className={sectionClassName} style={sectionStyle}>
       <div className="mb-4 flex items-center justify-between">
         <h2
-          className="text-sm font-semibold"
+          className="text-base font-semibold tracking-tight"
           style={{ color: "var(--text-primary)" }}
         >
           Reminders
@@ -139,8 +140,7 @@ export default function RemindersSection({
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="rounded-full px-4 py-1.5 text-xs font-medium"
-            style={secondaryButtonStyle}
+            className={secondaryButtonClass}
           >
             Add reminder
           </button>
@@ -160,11 +160,8 @@ export default function RemindersSection({
       {showForm && (
         <form
           onSubmit={(e) => void handleCreate(e)}
-          className="mb-5 space-y-4 rounded-lg p-4"
-          style={{
-            backgroundColor: "var(--bg-subtle)",
-            border: "1px solid var(--border-light)",
-          }}
+          className="mb-6 space-y-4 pb-6"
+          style={{ borderBottom: "1px solid var(--border-light)" }}
         >
           <div className="flex flex-wrap gap-2">
             {QUICK_PICKS.map((pick) => (
@@ -174,8 +171,7 @@ export default function RemindersSection({
                 onClick={() =>
                   setRemindAt(toLocalInputValue(daysFromNowAt9(pick.days)))
                 }
-                className="rounded-full px-3 py-1 text-xs font-medium"
-                style={secondaryButtonStyle}
+                className={secondaryButtonClass}
               >
                 {pick.label}
               </button>
@@ -224,16 +220,14 @@ export default function RemindersSection({
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full px-5 py-2 text-xs font-medium"
-              style={primaryButtonStyle}
+              className={primaryButtonClass}
             >
               {saving ? "Saving..." : "Save reminder"}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="rounded-full px-5 py-2 text-xs font-medium"
-              style={secondaryButtonStyle}
+              className={secondaryButtonClass}
             >
               Cancel
             </button>
@@ -269,7 +263,9 @@ export default function RemindersSection({
                 <div className="flex min-w-0 items-start gap-3">
                   <Bell
                     className="mt-0.5 h-4 w-4 shrink-0"
-                    style={{ color: overdue ? "#B45309" : "var(--accent)" }}
+                    style={{
+                      color: overdue ? "var(--warn-text)" : "var(--accent)",
+                    }}
                   />
                   <div className="min-w-0 text-sm">
                     <p
@@ -281,7 +277,9 @@ export default function RemindersSection({
                     <p
                       className="mt-0.5 text-xs"
                       style={{
-                        color: overdue ? "#B45309" : "var(--text-muted)",
+                        color: overdue
+                          ? "var(--warn-text)"
+                          : "var(--text-muted)",
                       }}
                     >
                       {overdue && "Overdue · "}
@@ -295,7 +293,7 @@ export default function RemindersSection({
                     onClick={() => void toggleDone(reminder)}
                     aria-label={done ? "Mark as not done" : "Mark as done"}
                     title={done ? "Mark as not done" : "Mark as done"}
-                    className="rounded-full p-2 transition hover:bg-white"
+                    className="btn btn-quiet inline-flex h-10 w-10 items-center justify-center"
                     style={{
                       color: done ? "var(--text-muted)" : "var(--accent)",
                     }}
@@ -306,7 +304,7 @@ export default function RemindersSection({
                     type="button"
                     onClick={() => void handleDelete(reminder)}
                     aria-label="Delete reminder"
-                    className="rounded-full p-2 text-red-700 transition hover:bg-red-50"
+                    className="btn btn-danger-quiet inline-flex h-10 w-10 items-center justify-center"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -111,7 +111,7 @@ export default function DocumentPreview({
               type="button"
               onClick={onClose}
               aria-label="Close preview"
-              className="rounded-full p-2 transition hover:bg-black/5"
+              className="btn btn-quiet inline-flex h-10 w-10 items-center justify-center"
               style={{ color: "var(--text-secondary)" }}
             >
               <X className="h-4 w-4" />
@@ -124,7 +124,10 @@ export default function DocumentPreview({
           style={{ backgroundColor: "var(--bg-card-alt)" }}
         >
           {error ? (
-            <p className="p-8 text-center text-sm" style={{ color: "#991B1B" }}>
+            <p
+              className="p-8 text-center text-sm"
+              style={{ color: "var(--danger-text)" }}
+            >
               {error}
             </p>
           ) : blobUrl ? (

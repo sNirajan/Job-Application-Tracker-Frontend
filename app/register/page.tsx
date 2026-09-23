@@ -7,8 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthContext";
-
-
+import { errorBoxStyle, getInputStyles } from "@/lib/ui";
 
 const registerSchema = z
   .object({
@@ -22,12 +21,8 @@ const registerSchema = z
       .trim()
       .min(1, "Email is required")
       .email("Please enter a valid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters"),
-    confirmPassword: z
-      .string()
-      .min(1, "Please confirm your password"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: "Passwords do not match",
@@ -35,15 +30,6 @@ const registerSchema = z
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-
-function getInputStyles(hasError: boolean) {
-  return {
-    backgroundColor: "var(--bg-card)",
-    color: "var(--text-primary)",
-    border: `1px solid ${hasError ? "#FCA5A5" : "var(--border)"}`,
-    boxShadow: hasError ? "0 0 0 4px rgba(252, 165, 165, 0.16)" : "none",
-  };
-}
 
 function FeatureRow({
   title,
@@ -162,8 +148,6 @@ export default function RegisterPage() {
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-lg">
               <div className="max-w-md">
-                
-
                 <h1
                   className="mt-5 text-4xl font-bold tracking-tight xl:text-5xl text-center"
                   style={{
@@ -176,15 +160,14 @@ export default function RegisterPage() {
                   <br />
                   your applications.
                 </h1>
-
               </div>
 
               <div
-                className="mt-10 max-w-md rounded-[24px] border p-5 backdrop-blur-sm"
+                className="mt-10 max-w-md rounded-xl border p-5"
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.62)",
-                  borderColor: "rgba(15, 23, 42, 0.08)",
-                  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+                  backgroundColor: "var(--bg-card)",
+                  borderColor: "var(--border-light)",
+                  boxShadow: "var(--shadow-card)",
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -206,8 +189,8 @@ export default function RegisterPage() {
                   <span
                     className="rounded-full px-3 py-1 text-xs font-medium"
                     style={{
-                      backgroundColor: "rgba(16, 185, 129, 0.10)",
-                      color: "#065F46",
+                      backgroundColor: "var(--bg-green)",
+                      color: "var(--accent)",
                     }}
                   >
                     Free
@@ -266,7 +249,6 @@ export default function RegisterPage() {
             }}
           >
             <div>
-
               <h2
                 className="mt-3 text-3xl font-bold tracking-tight"
                 style={{
@@ -290,11 +272,7 @@ export default function RegisterPage() {
                 role="alert"
                 aria-live="polite"
                 className="mt-6 rounded-xl px-4 py-3 text-sm"
-                style={{
-                  backgroundColor: "#FEF2F2",
-                  color: "#991B1B",
-                  border: "1px solid #FECACA",
-                }}
+                style={errorBoxStyle}
               >
                 {serverError}
               </div>
@@ -321,7 +299,7 @@ export default function RegisterPage() {
                   autoComplete="name"
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? "name-error" : undefined}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  className="field w-full px-4 py-3 text-sm outline-none"
                   style={getInputStyles(Boolean(errors.name))}
                   {...nameField}
                 />
@@ -330,7 +308,7 @@ export default function RegisterPage() {
                   <p
                     id="name-error"
                     className="mt-2 text-xs"
-                    style={{ color: "#B91C1C" }}
+                    style={{ color: "var(--danger)" }}
                   >
                     {errors.name.message}
                   </p>
@@ -353,7 +331,7 @@ export default function RegisterPage() {
                   autoComplete="email"
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? "email-error" : undefined}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  className="field w-full px-4 py-3 text-sm outline-none"
                   style={getInputStyles(Boolean(errors.email))}
                   {...emailField}
                 />
@@ -362,7 +340,7 @@ export default function RegisterPage() {
                   <p
                     id="email-error"
                     className="mt-2 text-xs"
-                    style={{ color: "#B91C1C" }}
+                    style={{ color: "var(--danger)" }}
                   >
                     {errors.email.message}
                   </p>
@@ -384,8 +362,10 @@ export default function RegisterPage() {
                   placeholder="Minimum 8 characters"
                   autoComplete="new-password"
                   aria-invalid={Boolean(errors.password)}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
+                  className="field w-full px-4 py-3 text-sm outline-none"
                   style={getInputStyles(Boolean(errors.password))}
                   {...passwordField}
                 />
@@ -394,7 +374,7 @@ export default function RegisterPage() {
                   <p
                     id="password-error"
                     className="mt-2 text-xs"
-                    style={{ color: "#B91C1C" }}
+                    style={{ color: "var(--danger)" }}
                   >
                     {errors.password.message}
                   </p>
@@ -417,9 +397,11 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                   aria-invalid={Boolean(errors.confirmPassword)}
                   aria-describedby={
-                    errors.confirmPassword ? "confirm-password-error" : undefined
+                    errors.confirmPassword
+                      ? "confirm-password-error"
+                      : undefined
                   }
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  className="field w-full px-4 py-3 text-sm outline-none"
                   style={getInputStyles(Boolean(errors.confirmPassword))}
                   {...confirmPasswordField}
                 />
@@ -428,7 +410,7 @@ export default function RegisterPage() {
                   <p
                     id="confirm-password-error"
                     className="mt-2 text-xs"
-                    style={{ color: "#B91C1C" }}
+                    style={{ color: "var(--danger)" }}
                   >
                     {errors.confirmPassword.message}
                   </p>
@@ -438,12 +420,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl py-3 text-sm font-medium transition"
-                style={{
-                  backgroundColor: isSubmitting ? "var(--border)" : "var(--accent)",
-                  color: isSubmitting ? "var(--text-muted)" : "#FFFFFF",
-                  cursor: isSubmitting ? "wait" : "pointer",
-                }}
+                className="btn btn-md btn-primary w-full"
               >
                 {isSubmitting ? "Creating account..." : "Create account"}
               </button>

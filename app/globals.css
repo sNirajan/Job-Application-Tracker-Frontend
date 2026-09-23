@@ -1,47 +1,220 @@
- @import "tailwindcss";
+@import "tailwindcss";
+
+/*
+ * Design tokens.
+ *
+ * Surfaces are a bright, near-white neutral tinted a touch toward the
+ * brand green, so white cards still separate from the page.
+ *
+ * Text and border values are chosen to meet WCAG AA on every surface
+ * they are used on (body text 4.5:1, UI borders and focus rings 3:1).
+ * Ratios in the comments are the worst case across all backgrounds.
+ */
 
 :root {
   /* Text */
-  --text-primary: #171717;
-  --text-secondary: #5F6470;
-  --text-muted: #6B7280;
+  --text-primary: #141715; /* 14.2:1 worst case */
+  --text-secondary: #464d59; /* 6.5:1 worst case */
+  --text-muted: #5a616e; /* 4.8:1 worst case */
+  --text-on-accent: #ffffff; /* 7.4:1 on accent */
 
   /* Brand */
-  --accent: #2F5E4E;
-  --accent-hover: #264B3E;
+  --accent: #2f5e4e;
+  --accent-hover: #264b3e;
+  --accent-quiet: #dce7e2;
 
   /* Backgrounds */
-  --bg-page: #F7F3EC;
-  --bg-warm: #E9E1D6;
-  --bg-green: #DCE7E2;
-  --bg-card: #FFFFFF;
-  --bg-card-alt: #F8F5F0;
-  --bg-subtle: #FCFBF8;
+  --bg-page: #f7f9f8;
+  --bg-warm: #eaeeec;
+  --bg-green: #dce7e2;
+  --bg-card: #ffffff;
+  --bg-card-alt: #f1f4f3;
+  --bg-subtle: #fbfcfc;
 
-  /* Borders */
-  --border: #D8D1C7;
-  --border-light: #ECE6DD;
-} 
+  /* Borders: -light separates, default divides, -strong outlines controls */
+  --border-light: #edf0ef;
+  --border: #d7dedb;
+  --border-strong: #84908b; /* 3.3:1, for inputs and other controls */
 
-/* 
-@import "tailwindcss";
+  /* Status */
+  --danger: #b91c1c;
+  --danger-text: #991b1b;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --warn-text: #92400e; /* 6.8:1 on warn-bg */
+  --warn-bg: #fffbeb;
 
-:root {
-  --background: #f7f3ec;
-  --foreground: #171717;
+  /* Focus */
+  --focus-ring: var(--accent);
+
+  /* Radii: cards stay modest, only pills go fully round */
+  --radius-control: 0.625rem;
+  --radius-card: 0.75rem;
+  --radius-pill: 9999px;
+
+  /* Elevation: flat by default, raised only while dragging or in a dialog */
+  --shadow-card: 0 1px 2px rgba(23, 23, 23, 0.04);
+  --shadow-raised: 0 10px 30px rgba(23, 23, 23, 0.16);
+
+  /* Layering */
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-dialog: 50;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration: 180ms;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
 h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-manrope), sans-serif;
-} */
+h4 {
+  font-family: var(--font-manrope), var(--font-inter), system-ui, sans-serif;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1; /* Firefox dims placeholders by default, which breaks contrast */
+}
+
+::selection {
+  background-color: var(--accent-quiet);
+  color: var(--text-primary);
+}
+
+/*
+ * Focus rings. Written outside Tailwind's layers on purpose: several
+ * inputs carry the `outline-none` utility, and unlayered rules win over
+ * layered ones no matter the specificity. Keyboard users get a visible
+ * ring everywhere; mouse users do not see it.
+ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Button vocabulary. One shape, three weights, all states defined once.
+ * Without these, each page re-declared its own inline colours and the
+ * hover state was a scale transform, which is decoration rather than
+ * feedback about what the control does.
+ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-pill);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration) var(--ease-out),
+    border-color var(--duration) var(--ease-out),
+    color var(--duration) var(--ease-out);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Comfortable hit areas: 44px for primary actions, 36px for compact ones */
+.btn-md {
+  min-height: 2.75rem;
+  padding-inline: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.btn-sm {
+  min-height: 2.25rem;
+  padding-inline: 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-card-alt);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.btn-quiet {
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-quiet:hover:not(:disabled) {
+  background-color: var(--bg-warm);
+  color: var(--text-primary);
+}
+
+.btn-danger-quiet {
+  background-color: transparent;
+  color: var(--danger);
+}
+
+.btn-danger-quiet:hover:not(:disabled) {
+  background-color: var(--danger-bg);
+}
+
+/* Inputs: the border carries the state, so it changes on hover and focus */
+.field {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+}
+
+.field:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+.field:focus-visible {
+  border-color: var(--accent);
+}
