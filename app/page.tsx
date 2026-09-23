@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { statusBadgeStyle } from "@/lib/ui";
+import type { Status } from "@/lib/statusMachine";
 
 const PIPELINE = [
   { label: "Wishlist", count: 18 },
@@ -7,25 +9,70 @@ const PIPELINE = [
   { label: "Offer", count: 1 },
 ];
 
-const ACTIVITY = [
+const ACTIVITY: {
+  company: string;
+  role: string;
+  status: Status;
+  label: string;
+  date: string;
+}[] = [
   {
     company: "Helcim",
     role: "Software Developer",
-    status: "Interview",
+    status: "onsite",
+    label: "Onsite",
     date: "Apr 8",
   },
   {
     company: "Neo Financial",
     role: "Backend Developer",
-    status: "Applied",
+    status: "applied",
+    label: "Applied",
     date: "Apr 5",
   },
   {
     company: "Clio",
     role: "Full Stack Developer",
-    status: "Wishlist",
+    status: "wishlist",
+    label: "Wishlist",
     date: "Saved",
   },
+];
+
+const CAPABILITIES = [
+  {
+    title: "A board you can drag",
+    body: "Move a job from applied to phone screen by dragging its card. Only the stages that are really possible will accept it, so the board can never show a state your application was never in.",
+  },
+  {
+    title: "Reminders and follow-ups",
+    body: "Set a reminder when you promise to get back to someone. Anything sitting quiet for a week shows up on the dashboard as a suggested follow-up.",
+  },
+  {
+    title: "The resume you actually sent",
+    body: "Attach the exact resume or cover letter to each job, then read it in the app later. No more guessing which version went where.",
+  },
+];
+
+const STEPS = [
+  {
+    title: "Add the role",
+    body: "Company, title, link. Ten seconds, right after you apply.",
+  },
+  {
+    title: "Move it as things happen",
+    body: "Drag the card when a recruiter replies. Every move is kept with its date and note.",
+  },
+  {
+    title: "Check what needs you",
+    body: "The dashboard shows what is due and what has gone quiet.",
+  },
+];
+
+const BOARD_PREVIEW = [
+  { stage: "Applied", jobs: ["Shopify", "Clio"] },
+  { stage: "Phone screen", jobs: ["Helcim"] },
+  { stage: "Onsite", jobs: ["Neo Financial"] },
 ];
 
 export default function Home() {
@@ -145,12 +192,9 @@ export default function Home() {
                 <div className="shrink-0 text-right">
                   <span
                     className="rounded-full px-2.5 py-1 text-xs font-medium"
-                    style={{
-                      backgroundColor: "var(--bg-green)",
-                      color: "var(--accent)",
-                    }}
+                    style={statusBadgeStyle(item.status)}
                   >
-                    {item.status}
+                    {item.label}
                   </span>
                   <p
                     className="mt-1 text-xs"
@@ -192,6 +236,170 @@ export default function Home() {
           </dl>
         </div>
       </section>
+
+      {/* What you get. One shared heading with a divided list reads calmer
+          than three identical feature cards. */}
+      <section
+        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <div className="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-16">
+          <h2 className="text-2xl font-bold tracking-[-0.02em]">
+            What you get
+          </h2>
+
+          <dl className="max-w-2xl">
+            {CAPABILITIES.map((item, index) => (
+              <div
+                key={item.title}
+                className="py-6 first:pt-0 last:pb-0"
+                style={{
+                  borderTop:
+                    index === 0 ? "none" : "1px solid var(--border-light)",
+                }}
+              >
+                <dt className="text-base font-semibold">{item.title}</dt>
+                <dd
+                  className="mt-2 max-w-[62ch] leading-relaxed"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {item.body}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* The board, shown rather than described */}
+      <section
+        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <h2 className="max-w-[24ch] text-2xl font-bold tracking-[-0.02em]">
+          Every application, at the stage it is really at
+        </h2>
+        <p
+          className="mt-3 max-w-[58ch] leading-relaxed"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          The board works with a mouse, a touchscreen, or the keyboard alone,
+          and every move is written into that job&apos;s history.
+        </p>
+
+        <div aria-hidden="true" className="mt-8 grid gap-4 sm:grid-cols-3">
+          {BOARD_PREVIEW.map((column) => (
+            <div
+              key={column.stage}
+              className="p-4"
+              style={{
+                backgroundColor: "var(--bg-card-alt)",
+                border: "1px solid var(--border-light)",
+                borderRadius: "var(--radius-card)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">{column.stage}</p>
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
+                  style={{
+                    backgroundColor: "var(--bg-card)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {column.jobs.length}
+                </span>
+              </div>
+
+              <ul className="mt-3 space-y-2">
+                {column.jobs.map((job) => (
+                  <li
+                    key={job}
+                    className="px-3 py-2.5 text-sm font-medium"
+                    style={{
+                      backgroundColor: "var(--bg-card)",
+                      border: "1px solid var(--border-light)",
+                      borderRadius: "var(--radius-control)",
+                      boxShadow: "var(--shadow-card)",
+                    }}
+                  >
+                    {job}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Numbers earn their place here because this really is a sequence */}
+      <section
+        className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <h2 className="text-2xl font-bold tracking-[-0.02em]">How it works</h2>
+
+        <ol className="mt-8 grid gap-8 sm:grid-cols-3 sm:gap-10">
+          {STEPS.map((step, index) => (
+            <li key={step.title}>
+              <span
+                className="text-sm font-semibold tabular-nums"
+                style={{ color: "var(--accent)" }}
+              >
+                {index + 1}
+              </span>
+              <h3 className="mt-2 text-base font-semibold">{step.title}</h3>
+              <p
+                className="mt-1.5 max-w-[42ch] leading-relaxed"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {step.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-12 flex flex-wrap items-center gap-4">
+          <Link href="/register" className="btn btn-md btn-primary">
+            Start tracking for free
+          </Link>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Free, and your data stays yours.
+          </p>
+        </div>
+      </section>
+
+      <footer
+        className="mx-auto max-w-6xl px-6 py-10 md:px-10"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Built with Next.js, Node, PostgreSQL and AWS.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-5 text-sm">
+            <a
+              href="https://github.com/sNirajan/Job-Application-Tracker"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-4"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              API source
+            </a>
+            <a
+              href="https://github.com/sNirajan/Job-Application-Tracker-Frontend"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-4"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Frontend source
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
